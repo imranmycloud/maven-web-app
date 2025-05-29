@@ -7,5 +7,10 @@ pipeline {
                 checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/imranmycloud/maven-web-app.git']])
             }
         }
+         stage('Compile Application') {
+            steps {
+                 sh '/var/lib/jenkins/workspace/test/apache-Maven 3.8.7/bin/mvn compile'
+            }
+        }
     }
 }
