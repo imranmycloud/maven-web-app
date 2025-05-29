@@ -35,6 +35,14 @@ stage('Install Maven Build Tool') {
             }
            }
         }
+stage('Test Application') {
+            steps {
+                dir('/var/lib/jenkins/workspace/test'){
+                sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn test'
+            }
+           }
+        }
+         
          
     }
 }
