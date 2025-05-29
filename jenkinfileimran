@@ -8,13 +8,4 @@ pipeline {
             }
         }
     }
-stages {
-        stage('Compile Application') {
-            steps {
-                sh '/var/lib/jenkins/workspace/test/apache-Maven 3.8.7/bin/mvn compile'
-            }
-        }
-    }
-    
-    }
 }
