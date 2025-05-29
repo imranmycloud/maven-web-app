@@ -7,6 +7,7 @@ pipeline {
                 checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/imranmycloud/maven-web-app.git']])
             }
         }
+    }
 stages {
         stage('Compile Application') {
             steps {
@@ -14,5 +15,6 @@ stages {
             }
         }
     }
+    
     }
 }
