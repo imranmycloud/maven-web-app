@@ -1,5 +1,3 @@
-7ede49a2-7f7e-404c-bcf4-8ba6161acec8 nexus tocken
-
 pipeline {
     agent any
 
