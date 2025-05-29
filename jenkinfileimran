@@ -28,10 +28,12 @@ stage('Install Maven Build Tool') {
                 // sh 'mvn clean install'
             }
         }
-         stage('Compile Application') {
+        stage('Compile Application') {
             steps {
-                 sh '/var/lib/jenkins/workspace/test/apache-Maven 3.8.7/bin/mvn compile'
+                dir('/var/lib/jenkins/workspace/test'){
+                sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn compile'
             }
+           }
         }
          
     }
