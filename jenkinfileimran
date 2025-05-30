@@ -6,6 +6,13 @@ pipeline {
         MAVEN_HOME = "${env.WORKSPACE}/apache-maven-${MAVEN_VERSION}"
         PATH = "${MAVEN_HOME}/bin:${env.PATH}"
     }
+ environment {
+        AWS_ACCOUNT_ID="900671793678"
+        AWS_DEFAULT_REGION="us-east-1"
+        IMAGE_REPO_NAME="devopshint"
+        IMAGE_TAG="latest"
+        REPOSITORY_URI = "900671793678.dkr.ecr.us-east-1.amazonaws.com/devopshint"
+    }
 
     stages {
         stage('Checkout Code') {
