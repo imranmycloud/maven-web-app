@@ -50,6 +50,13 @@ stage('Test Application') {
             }
            }
         }
+        stage('Nexus Artifact Upload') {
+            steps {
+                dir('/var/lib/jenkins/workspace/test/target'){
+                nexusArtifactUploader artifacts: [[artifactId: 'testartifactId', classifier: '', file: 'maven-web-app.war', type: 'war']], credentialsId: 'nexus-credentials', groupId: 'com.test.app', nexusUrl: '54.86.130.120:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'testrepository', version: '2.1.1-SNAPSHOT'
+            }
+           }
+        }
          
     }
 }
