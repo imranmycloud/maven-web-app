@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -7,13 +6,15 @@ pipeline {
         MAVEN_HOME = "${env.WORKSPACE}/apache-maven-${MAVEN_VERSION}"
         PATH = "${MAVEN_HOME}/bin:${env.PATH}"
     }
+
     stages {
         stage('Checkout Code') {
             steps {
                 checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/imranmycloud/maven-web-app.git']])
             }
         }
-stage('Install Maven Build Tool') {
+
+        stage('Install Maven Build Tool') {
             steps {
                 sh '''
                     wget https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
@@ -21,51 +22,62 @@ stage('Install Maven Build Tool') {
                 '''
             }
         }
- stage('Build with Maven') {
+
+        stage('Build with Maven') {
             steps {
                 sh 'mvn --version'
-                // Example build command
-                // sh 'mvn clean install'
             }
         }
+
         stage('Compile Application') {
             steps {
-                dir('/var/lib/jenkins/workspace/test'){
-                sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn compile'
+                dir('/var/lib/jenkins/workspace/test') {
+                    sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn compile'
+                }
             }
-           }
         }
-stage('Test Application') {
+
+        stage('Test Application') {
             steps {
-                dir('/var/lib/jenkins/workspace/test'){
-                sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn test'
+                dir('/var/lib/jenkins/workspace/test') {
+                    sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn test'
+                }
             }
-           }
         }
-         
-         stage('Package Application') {
+
+        stage('Package Application') {
             steps {
-                dir('/var/lib/jenkins/workspace/test'){
-                sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn package'
+                dir('/var/lib/jenkins/workspace/test') {
+                    sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn package'
+                }
             }
-           }
         }
- stage('Sonarqube Analysis') {
+
+        stage('Sonarqube Analysis') {
             steps {
-                dir('/var/lib/jenkins/workspace/test'){
-               withSonarQubeEnv(credentialsId: 'sonar-token',installationName:'sonar') {
-                 sh "/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=test_project,-Dsonar.projectName='test_project'"
-              }
+                dir('/var/lib/jenkins/workspace/test') {
+                    withSonarQubeEnv('sonar') {  // Use the SonarQube Server name
+                        sh "/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=test_project -Dsonar.projectName='test_project'"
+                    }
+                }
             }
-           }
         }
+
         stage('Nexus Artifact Upload') {
             steps {
-                dir('/var/lib/jenkins/workspace/test/target'){
-                nexusArtifactUploader artifacts: [[artifactId: 'testartifactId', classifier: '', file: 'maven-web-app.war', type: 'war']], credentialsId: 'nexus-credentials', groupId: 'com.test.app', nexusUrl: '54.86.130.120:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'testrepository', version: '2.1.1-SNAPSHOT'
+                dir('/var/lib/jenkins/workspace/test/target') {
+                    nexusArtifactUploader(
+                        artifacts: [[artifactId: 'testartifactId', classifier: '', file: 'maven-web-app.war', type: 'war']],
+                        credentialsId: 'nexus-credentials',
+                        groupId: 'com.test.app',
+                        nexusUrl: '54.86.130.120:8081',
+                        nexusVersion: 'nexus3',
+                        protocol: 'http',
+                        repository: 'testrepository',
+                        version: '2.1.1-SNAPSHOT'
+                    )
+                }
             }
-           }
         }
-         
     }
 }
