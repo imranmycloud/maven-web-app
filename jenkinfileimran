@@ -5,8 +5,7 @@ pipeline {
         MAVEN_VERSION = '3.9.4'
         MAVEN_HOME = "${env.WORKSPACE}/apache-maven-${MAVEN_VERSION}"
         PATH = "${MAVEN_HOME}/bin:${env.PATH}"
-    }
- environment {
+
         AWS_ACCOUNT_ID="900671793678"
         AWS_DEFAULT_REGION="us-east-1"
         IMAGE_REPO_NAME="devopshint"
