@@ -6,17 +6,21 @@ pipeline {
         MAVEN_HOME = "${env.WORKSPACE}/apache-maven-${MAVEN_VERSION}"
         PATH = "${MAVEN_HOME}/bin:${env.PATH}"
 
-        AWS_ACCOUNT_ID="900671793678"
-        AWS_DEFAULT_REGION="us-east-1"
-        IMAGE_REPO_NAME="devopshint"
-        IMAGE_TAG="latest"
-        REPOSITORY_URI = "900671793678.dkr.ecr.us-east-1.amazonaws.com/devopshint"
+        AWS_ACCOUNT_ID = "900671793678"
+        AWS_DEFAULT_REGION = "us-east-1"
+        IMAGE_REPO_NAME = "devopshint"
+        IMAGE_TAG = "latest"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/imranmycloud/maven-web-app.git']])
+                checkout scmGit(
+                    branches: [[name: '*/master']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/imranmycloud/maven-web-app.git']]
+                )
             }
         }
 
@@ -38,7 +42,7 @@ pipeline {
         stage('Compile Application') {
             steps {
                 dir('/var/lib/jenkins/workspace/test') {
-                    sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn compile'
+                    sh "${MAVEN_HOME}/bin/mvn compile"
                 }
             }
         }
@@ -46,7 +50,7 @@ pipeline {
         stage('Test Application') {
             steps {
                 dir('/var/lib/jenkins/workspace/test') {
-                    sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn test'
+                    sh "${MAVEN_HOME}/bin/mvn test"
                 }
             }
         }
@@ -54,7 +58,7 @@ pipeline {
         stage('Package Application') {
             steps {
                 dir('/var/lib/jenkins/workspace/test') {
-                    sh '/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn package'
+                    sh "${MAVEN_HOME}/bin/mvn package"
                 }
             }
         }
@@ -62,8 +66,8 @@ pipeline {
         stage('Sonarqube Analysis') {
             steps {
                 dir('/var/lib/jenkins/workspace/test') {
-                    withSonarQubeEnv('sonar') {  // Use the SonarQube Server name
-                        sh "/var/lib/jenkins/workspace/test/apache-maven-3.9.4/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=test_project -Dsonar.projectName='test_project'"
+                    withSonarQubeEnv('sonar') {
+                        sh "${MAVEN_HOME}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=test_project -Dsonar.projectName='test_project'"
                     }
                 }
             }
@@ -85,42 +89,48 @@ pipeline {
                 }
             }
         }
-  stage('Logging into AWS ECR') {
+
+        stage('Login to AWS ECR') {
             steps {
                 script {
-                sh """aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"""
+                    sh """
+                        aws ecr get-login-password --region ${env.AWS_DEFAULT_REGION} | \
+                        docker login --username AWS --password-stdin ${env.REPOSITORY_URI}
+                    """
                 }
-                 
             }
         }
- // Building Docker images
-    stage('Building image') {
-      steps{
-        script {
-          dockerImage = docker.build "${IMAGE_REPO_NAME}:${IMAGE_TAG}"
-        }
-      }
-    }
- // Uploading Docker images into AWS ECR
-    stage('Pushing to ECR') {
-     steps{  
-         script {
-                sh """docker tag ${IMAGE_REPO_NAME}:${IMAGE_TAG} ${REPOSITORY_URI}:$IMAGE_TAG"""
-                sh """docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"""
-         }
-        }
-      }
-stage('Deploy to Kubernets') {
-            steps {
-               script{
-                       {
-                         kubeconfig(credentialsId: 'kubernetes', serverUrl: '') {
-                         sh 'kubectl apply -f k8s-deploy.yml'
-                        }   
-                      }
-                   }
 
-               }
-          }
-}
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${env.IMAGE_REPO_NAME}:${env.IMAGE_TAG}")
+                }
+            }
+        }
+
+        stage('Push to AWS ECR') {
+            steps {
+                script {
+                    sh """
+                        docker tag ${env.IMAGE_REPO_NAME}:${env.IMAGE_TAG} ${env.REPOSITORY_URI}:${env.IMAGE_TAG}
+                        docker push ${env.REPOSITORY_URI}:${env.IMAGE_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    kubeconfig(
+                        credentialsId: 'kubernetes',
+                        serverUrl: ''
+                    ) {
+                        sh 'kubectl apply -f k8s-deploy.yml'
+                    }
+                }
+            }
+        }
+    }
 }
