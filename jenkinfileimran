@@ -110,5 +110,17 @@ pipeline {
          }
         }
       }
-    }
+stage('Deploy to Kubernets') {
+            steps {
+               script{
+                       {
+                         kubeconfig(credentialsId: 'kubernetes', serverUrl: '') {
+                         sh 'kubectl apply -f k8s-deploy.yml'
+                        }   
+                      }
+                   }
+
+               }
+          }
+}
 }
